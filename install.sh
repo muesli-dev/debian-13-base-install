@@ -91,10 +91,20 @@ fi
 # nginx
 # ================================================
 if [[ $INSTALL_NGINX == "y" || $INSTALL_NGINX == "Y" ]]; then
-  echo "📦 nginx wird installiert..."
+  echo "📦 nginx wird sauber installiert..."
+
+  # Alte Reste entfernen falls vorhanden
+  systemctl stop nginx 2>/dev/null || true
+  apt-get remove --purge -y nginx nginx-common 2>/dev/null || true
+  rm -rf /etc/nginx /var/www/html
+
+  apt-get update
   apt-get install -y nginx
+
   systemctl enable --now nginx
   echo "✅ nginx installiert und gestartet"
+  echo "   Standard-Webordner: /var/www/html"
+  echo "   Konfiguration:     /etc/nginx/"
 fi
 
 # ================================================
