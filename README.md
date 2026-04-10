@@ -8,7 +8,6 @@ Automatic setup script for a Debian 13 (Trixie) server on Hetzner.
 - **PostgreSQL** + pgAdmin4
 - **nginx**
 - **unzip**
-- **OpenVPN** (via angristan/openvpn-install)
 
 ## Usage
 
