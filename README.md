@@ -70,8 +70,7 @@ verb 3
   ```
 
 
-
-  # PostgreSQL + pgAdmin Fix Summary (VPN + Remote Access)
+# PostgreSQL + pgAdmin Fix Summary (VPN + Remote Access)
 
 ## 1. PostgreSQL User Passwort setzen
 
