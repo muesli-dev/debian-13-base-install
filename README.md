@@ -113,13 +113,6 @@ sudo systemctl restart postgresql
 
 ---
 
-## 5. Firewall (falls aktiv)
-
-```bash
-sudo ufw allow from 10.8.0.0/24 to any port 5432
-```
-
----
 
 ## 6. pgAdmin Verbindung
 
