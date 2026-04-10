@@ -100,12 +100,12 @@ fi
 # ================================================
 # OpenVPN (originales Script)
 # ================================================
-if [[ $INSTALL_OPENVPN == "y" || $INSTALL_OPENVPN == "Y" ]]; then
-  echo "🔐 OpenVPN Installer wird gestartet..."
-  curl -O https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
-  chmod +x openvpn-install.sh
-  ./openvpn-install.sh interactive
-fi
+#if [[ $INSTALL_OPENVPN == "y" || $INSTALL_OPENVPN == "Y" ]]; then
+#  echo "🔐 OpenVPN Installer wird gestartet..."
+#  curl -O https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
+#  chmod +x openvpn-install.sh
+#  ./openvpn-install.sh interactive
+#fi
 
 # ================================================
 # Fertig
