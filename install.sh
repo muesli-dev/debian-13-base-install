@@ -4,27 +4,24 @@
 # Node.js + pm2 + PostgreSQL + pgAdmin4 + nginx + unzip
 # ================================================
 
-set -e  # Bei Fehler abbrechen
+set -e
 
 echo "======================================================"
 echo "🚀 Debian 13 Base Server Setup"
 echo "======================================================"
 echo ""
 
-# Root-Check
 if [ "$EUID" -ne 0 ]; then
   echo "❌ Bitte als root ausführen: sudo bash $0"
   exit 1
 fi
 
-# System aktualisieren
 echo "📦 System wird aktualisiert..."
 apt-get update -y
 apt-get upgrade -y
 echo ""
 
-# Vollinstallation oder Custom?
-read -p "Alles auf einmal installieren? (y/n – empfohlen bei fresh install): " FULL_INSTALL
+read -p "Alles auf einmal installieren? (y/n): " FULL_INSTALL
 
 if [[ $FULL_INSTALL == "y" || $FULL_INSTALL == "Y" ]]; then
   INSTALL_NODE="y"
@@ -42,44 +39,32 @@ else
 fi
 echo ""
 
-# ================================================
 # unzip
-# ================================================
 if [[ $INSTALL_UNZIP == "y" || $INSTALL_UNZIP == "Y" ]]; then
   echo "📦 unzip wird installiert..."
   apt-get install -y --reinstall unzip
   echo "✅ unzip fertig"
 fi
 
-# ================================================
-# Node.js + pm2 (Reinstall möglich)
-# ================================================
+# Node.js + pm2
 if [[ $INSTALL_NODE == "y" || $INSTALL_NODE == "Y" ]]; then
   echo "📦 Node.js LTS + pm2 wird (neu) installiert..."
-
-  # Alte Versionen entfernen
   npm uninstall -g pm2 2>/dev/null || true
   apt-get remove --purge -y nodejs 2>/dev/null || true
   rm -rf /usr/local/bin/node /usr/local/bin/npm /opt/nodejs 2>/dev/null || true
 
-  # Frische Installation
   curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
   apt-get install -y nodejs
   npm install -g pm2
-
   echo "✅ Node.js $(node -v) + pm2 installiert"
 fi
 
-# ================================================
-# PostgreSQL + pgAdmin4 (Datenbanken werden geschützt!)
-# ================================================
+# PostgreSQL + pgAdmin4 (Datenbanken bleiben erhalten!)
 if [[ $INSTALL_POSTGRES == "y" || $INSTALL_POSTGRES == "Y" ]]; then
   echo "📦 PostgreSQL + pgAdmin4 wird installiert..."
-
   apt-get install -y postgresql postgresql-contrib
   systemctl enable --now postgresql
 
-  # pgAdmin4
   apt-get install -y curl ca-certificates gnupg lsb-release
   curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg
 
@@ -90,17 +75,25 @@ if [[ $INSTALL_POSTGRES == "y" || $INSTALL_POSTGRES == "Y" ]]; then
   apt-get install -y pgadmin4-web
 
   echo "✅ PostgreSQL + pgAdmin4 installiert"
-  echo "   → Web-Setup später starten mit:"
-  echo "     sudo /usr/pgadmin4/bin/setup-web.sh"
+  echo "   → Web-Setup später starten mit: sudo /usr/pgadmin4/bin/setup-web.sh"
 fi
 
-# ================================================
 # nginx (saubere Reinstall)
-# ================================================
 if [[ $INSTALL_NGINX == "y" || $INSTALL_NGINX == "Y" ]]; then
   echo "📦 nginx wird sauber (neu) installiert..."
 
-  # Alte Reste komplett entfernen
+  # Was belegt Port 80?
+  PORT80_PID=$(ss -tlnp | grep ':80' | grep -oP 'pid=\K[0-9]+' | head -1)
+  if [[ -n "$PORT80_PID" ]]; then
+    echo "⚠️  Port 80 belegt von PID $PORT80_PID – wird beendet..."
+    kill -9 "$PORT80_PID" 2>/dev/null || true
+  fi
+
+  # Apache entfernen falls vorhanden
+  systemctl stop apache2 2>/dev/null || true
+  apt-get remove --purge -y apache2 apache2-bin apache2-data 2>/dev/null || true
+
+  # Alte nginx Reste entfernen
   systemctl stop nginx 2>/dev/null || true
   apt-get remove --purge -y nginx nginx-common nginx-full nginx-core 2>/dev/null || true
   rm -rf /etc/nginx /var/www/html
@@ -108,25 +101,32 @@ if [[ $INSTALL_NGINX == "y" || $INSTALL_NGINX == "Y" ]]; then
   apt-get update
   apt-get install -y nginx
 
+  set +e
   systemctl enable --now nginx
-  echo "✅ nginx installiert und gestartet"
+  NGINX_STATUS=$?
+  set -e
+
+  if [ $NGINX_STATUS -eq 0 ]; then
+    echo "✅ nginx installiert und gestartet"
+  else
+    echo "⚠️  nginx installiert aber Start fehlgeschlagen."
+    echo "   Prüfe mit: journalctl -xeu nginx.service"
+  fi
+
   echo "   Web-Ordner:    /var/www/html"
   echo "   Konfig-Ordner: /etc/nginx/"
 fi
 
+# OpenVPN
+if [[ $INSTALL_OPENVPN == "y" || $INSTALL_OPENVPN == "Y" ]]; then
+  echo "🔐 OpenVPN Installer wird gestartet..."
+  curl -O https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
+  chmod +x openvpn-install.sh
+  ./openvpn-install.sh interactive
+fi
 
-# ================================================
-# Fertig
-# ================================================
 echo ""
 echo "======================================================"
-echo "🎉 Debian 13 Base Server Setup ABGESCHLOSSEN!"
+echo "🎉 Setup ABGESCHLOSSEN!"
 echo "======================================================"
-echo ""
-echo "Nützliche Befehle:"
-echo "  systemctl status postgresql"
-echo "  systemctl status nginx"
-echo "  pm2 list"
-echo "  sudo -u postgres psql"
-echo ""
 echo "Viel Erfolg mit deinem Server!"
