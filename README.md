@@ -68,4 +68,72 @@ verb 3
   ```bash
   sudo /usr/pgadmin4/bin/setup-web.sh
   ```
+
+
+
+  # PostgreSQL + pgAdmin Fix Summary (VPN + Remote Access)
+
+## 1. PostgreSQL User Passwort setzen
+
+```bash
+sudo -u postgres psql
+ALTER USER postgres PASSWORD 'DEIN_PASSWORT';
+\q
+```
+
+---
+
+## 2. PostgreSQL für Netzwerkzugriff aktivieren
+
+Datei:
+`/etc/postgresql/*/main/postgresql.conf`
+
+```conf
+listen_addresses = '*'
+```
+
+---
+
+## 3. VPN Zugriff erlauben
+
+Datei:
+`/etc/postgresql/*/main/pg_hba.conf`
+
+```conf
+host    all     all     10.8.0.0/24     scram-sha-256
+```
+
+---
+
+## 4. PostgreSQL neu starten
+
+```bash
+sudo systemctl restart postgresql
+```
+
+---
+
+## 5. Firewall (falls aktiv)
+
+```bash
+sudo ufw allow from 10.8.0.0/24 to any port 5432
+```
+
+---
+
+## 6. pgAdmin Verbindung
+
+- Host: 10.8.0.1
+- Port: 5432
+- User: postgres
+- Password: (wie gesetzt in Schritt 1)
+
+---
+
+## Ergebnis
+
+- Zugriff über VPN funktioniert
+- pgAdmin kann remote verbinden
+- vorheriger localhost-only Zugriff ist deaktiviert
+
  
