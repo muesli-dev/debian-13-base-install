@@ -1,13 +1,13 @@
 #!/bin/bash
 # ================================================
-# Server Setup Script – Debian 13
-# Node.js + pm2 + PostgreSQL + pgAdmin4 + nginx + unzip + OpenVPN
+# Debian 13 Base Server Setup
+# Node.js + pm2 + PostgreSQL + pgAdmin4 + nginx + unzip
 # ================================================
 
 set -e  # Bei Fehler abbrechen
 
 echo "======================================================"
-echo "🚀 Server Setup Script für Debian 13"
+echo "🚀 Debian 13 Base Server Setup"
 echo "======================================================"
 echo ""
 
@@ -47,32 +47,39 @@ echo ""
 # ================================================
 if [[ $INSTALL_UNZIP == "y" || $INSTALL_UNZIP == "Y" ]]; then
   echo "📦 unzip wird installiert..."
-  apt-get install -y unzip
+  apt-get install -y --reinstall unzip
   echo "✅ unzip fertig"
 fi
 
 # ================================================
-# Node.js + pm2
+# Node.js + pm2 (Reinstall möglich)
 # ================================================
 if [[ $INSTALL_NODE == "y" || $INSTALL_NODE == "Y" ]]; then
-  echo "📦 Node.js LTS + pm2 wird installiert..."
+  echo "📦 Node.js LTS + pm2 wird (neu) installiert..."
+
+  # Alte Versionen entfernen
+  npm uninstall -g pm2 2>/dev/null || true
+  apt-get remove --purge -y nodejs 2>/dev/null || true
+  rm -rf /usr/local/bin/node /usr/local/bin/npm /opt/nodejs 2>/dev/null || true
+
+  # Frische Installation
   curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
   apt-get install -y nodejs
   npm install -g pm2
+
   echo "✅ Node.js $(node -v) + pm2 installiert"
 fi
 
 # ================================================
-# PostgreSQL + pgAdmin4 (offiziell für Debian 13 trixie)
+# PostgreSQL + pgAdmin4 (Datenbanken werden geschützt!)
 # ================================================
 if [[ $INSTALL_POSTGRES == "y" || $INSTALL_POSTGRES == "Y" ]]; then
   echo "📦 PostgreSQL + pgAdmin4 wird installiert..."
 
-  # PostgreSQL
   apt-get install -y postgresql postgresql-contrib
   systemctl enable --now postgresql
 
-  # pgAdmin4 (offizielles Repo – seit Version 9.8 wird trixie nativ unterstützt)
+  # pgAdmin4
   apt-get install -y curl ca-certificates gnupg lsb-release
   curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg
 
@@ -83,19 +90,19 @@ if [[ $INSTALL_POSTGRES == "y" || $INSTALL_POSTGRES == "Y" ]]; then
   apt-get install -y pgadmin4-web
 
   echo "✅ PostgreSQL + pgAdmin4 installiert"
-  echo "   → Web-Setup später manuell starten mit:"
+  echo "   → Web-Setup später starten mit:"
   echo "     sudo /usr/pgadmin4/bin/setup-web.sh"
 fi
 
 # ================================================
-# nginx
+# nginx (saubere Reinstall)
 # ================================================
 if [[ $INSTALL_NGINX == "y" || $INSTALL_NGINX == "Y" ]]; then
-  echo "📦 nginx wird sauber installiert..."
+  echo "📦 nginx wird sauber (neu) installiert..."
 
-  # Alte Reste entfernen falls vorhanden
+  # Alte Reste komplett entfernen
   systemctl stop nginx 2>/dev/null || true
-  apt-get remove --purge -y nginx nginx-common 2>/dev/null || true
+  apt-get remove --purge -y nginx nginx-common nginx-full nginx-core 2>/dev/null || true
   rm -rf /etc/nginx /var/www/html
 
   apt-get update
@@ -103,26 +110,17 @@ if [[ $INSTALL_NGINX == "y" || $INSTALL_NGINX == "Y" ]]; then
 
   systemctl enable --now nginx
   echo "✅ nginx installiert und gestartet"
-  echo "   Standard-Webordner: /var/www/html"
-  echo "   Konfiguration:     /etc/nginx/"
+  echo "   Web-Ordner:    /var/www/html"
+  echo "   Konfig-Ordner: /etc/nginx/"
 fi
 
-# ================================================
-# OpenVPN (originales Script)
-# ================================================
-#if [[ $INSTALL_OPENVPN == "y" || $INSTALL_OPENVPN == "Y" ]]; then
-#  echo "🔐 OpenVPN Installer wird gestartet..."
-#  curl -O https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
-#  chmod +x openvpn-install.sh
-#  ./openvpn-install.sh interactive
-#fi
 
 # ================================================
 # Fertig
 # ================================================
 echo ""
 echo "======================================================"
-echo "🎉 Server Setup ABGESCHLOSSEN!"
+echo "🎉 Debian 13 Base Server Setup ABGESCHLOSSEN!"
 echo "======================================================"
 echo ""
 echo "Nützliche Befehle:"
@@ -131,4 +129,4 @@ echo "  systemctl status nginx"
 echo "  pm2 list"
 echo "  sudo -u postgres psql"
 echo ""
-echo "Viel Spaß mit deinem Prod / Dev Server! 🦌"
+echo "Viel Erfolg mit deinem Server!"
