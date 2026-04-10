@@ -1,7 +1,7 @@
 #!/bin/bash
 # ================================================
 # FSW Server Setup Script – Debian 13 (Hetzner)
-# Node.js + pm2 + PostgreSQL + pgAdmin + nginx + unzip + OpenVPN
+# Node.js + pm2 + PostgreSQL + pgAdmin4 + nginx + unzip + OpenVPN
 # ================================================
 
 set -e  # Bei Fehler abbrechen
@@ -40,7 +40,6 @@ else
   read -p "unzip installieren? (y/n): " INSTALL_UNZIP
   read -p "OpenVPN Server installieren? (y/n): " INSTALL_OPENVPN
 fi
-
 echo ""
 
 # ================================================
@@ -64,7 +63,7 @@ if [[ $INSTALL_NODE == "y" || $INSTALL_NODE == "Y" ]]; then
 fi
 
 # ================================================
-# PostgreSQL + pgAdmin4
+# PostgreSQL + pgAdmin4 (offiziell für Debian 13 trixie)
 # ================================================
 if [[ $INSTALL_POSTGRES == "y" || $INSTALL_POSTGRES == "Y" ]]; then
   echo "📦 PostgreSQL + pgAdmin4 wird installiert..."
@@ -73,40 +72,19 @@ if [[ $INSTALL_POSTGRES == "y" || $INSTALL_POSTGRES == "Y" ]]; then
   apt-get install -y postgresql postgresql-contrib
   systemctl enable --now postgresql
 
-  # pgAdmin4 – Debian 13 (trixie) noch nicht offiziell unterstützt,
-  # daher Fallback auf bookworm-Repo bis pgAdmin4 trixie bereitstellt
-  apt-get install -y curl ca-certificates lsb-release gnupg
+  # pgAdmin4 (offizielles Repo – seit Version 9.8 wird trixie nativ unterstützt)
+  apt-get install -y curl ca-certificates gnupg lsb-release
+  curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg
 
-  DIST=$(lsb_release -cs)
-  if [[ "$DIST" == "trixie" || "$DIST" == "forky" ]]; then
-    echo "⚠️  pgAdmin4 hat noch kein Repo für '$DIST' – Fallback auf 'bookworm'"
-    PGADMIN_DIST="bookworm"
-  else
-    PGADMIN_DIST="$DIST"
-  fi
-
-  curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub \
-    | gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg
-
-  echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] \
-https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/${PGADMIN_DIST} pgadmin4 main" \
+  echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release -cs) pgadmin4 main" \
     | tee /etc/apt/sources.list.d/pgadmin4.list > /dev/null
 
-  # set -e kurz deaktivieren – falls Repo doch Probleme macht, nicht alles abbrechen
-  set +e
-  apt-get update 2>&1 | grep -v "^W:"
-  PGADMIN_UPDATE_OK=$?
-  set -e
+  apt-get update
+  apt-get install -y pgadmin4-web
 
-  if [ $PGADMIN_UPDATE_OK -ne 0 ]; then
-    echo "❌ pgAdmin4-Repo konnte nicht geladen werden. pgAdmin4 wird übersprungen."
-    echo "   PostgreSQL ist trotzdem installiert und läuft."
-  else
-    apt-get install -y pgadmin4-web
-    echo "✅ PostgreSQL + pgAdmin4 installiert"
-    echo "   → Web-Setup später manuell starten mit:"
-    echo "     sudo /usr/pgadmin4/bin/setup-web.sh"
-  fi
+  echo "✅ PostgreSQL + pgAdmin4 installiert"
+  echo "   → Web-Setup später manuell starten mit:"
+  echo "     sudo /usr/pgadmin4/bin/setup-web.sh"
 fi
 
 # ================================================
@@ -120,10 +98,10 @@ if [[ $INSTALL_NGINX == "y" || $INSTALL_NGINX == "Y" ]]; then
 fi
 
 # ================================================
-# OpenVPN (originales Script – immer aktuell)
+# OpenVPN (originales Script)
 # ================================================
 if [[ $INSTALL_OPENVPN == "y" || $INSTALL_OPENVPN == "Y" ]]; then
-  echo "🔐 OpenVPN Installer wird gestartet (original von angristan)..."
+  echo "🔐 OpenVPN Installer wird gestartet..."
   curl -O https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
   chmod +x openvpn-install.sh
   ./openvpn-install.sh
@@ -144,4 +122,3 @@ echo "  pm2 list"
 echo "  sudo -u postgres psql"
 echo ""
 echo "Viel Spaß mit deinem FSW Prod / Dev Server! 🦌"
-echo "Bei Fragen einfach fragen – ich helfe sofort weiter."
