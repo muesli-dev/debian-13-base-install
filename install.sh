@@ -43,6 +43,7 @@ echo ""
 if [[ $INSTALL_UNZIP == "y" || $INSTALL_UNZIP == "Y" ]]; then
   echo "📦 unzip wird installiert..."
   apt-get install -y --reinstall unzip
+  apt install file-roller p7zip-full p7zip-rar tar
   echo "✅ unzip fertig"
 fi
 
