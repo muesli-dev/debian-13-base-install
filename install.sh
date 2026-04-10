@@ -1,13 +1,13 @@
 #!/bin/bash
 # ================================================
-# FSW Server Setup Script – Debian 13 (Hetzner)
+# Server Setup Script – Debian 13
 # Node.js + pm2 + PostgreSQL + pgAdmin4 + nginx + unzip + OpenVPN
 # ================================================
 
 set -e  # Bei Fehler abbrechen
 
 echo "======================================================"
-echo "🚀 FSW Server Setup Script für Debian 13 (Hetzner)"
+echo "🚀 Server Setup Script für Debian 13"
 echo "======================================================"
 echo ""
 
@@ -112,7 +112,7 @@ fi
 # ================================================
 echo ""
 echo "======================================================"
-echo "🎉 FSW Server Setup ABGESCHLOSSEN!"
+echo "🎉 Server Setup ABGESCHLOSSEN!"
 echo "======================================================"
 echo ""
 echo "Nützliche Befehle:"
@@ -121,4 +121,4 @@ echo "  systemctl status nginx"
 echo "  pm2 list"
 echo "  sudo -u postgres psql"
 echo ""
-echo "Viel Spaß mit deinem FSW Prod / Dev Server! 🦌"
+echo "Viel Spaß mit deinem Prod / Dev Server! 🦌"
